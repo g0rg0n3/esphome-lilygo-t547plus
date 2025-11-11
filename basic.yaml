@@ -1,27 +1,124 @@
 esphome:
-  name: t547_example
+  name: lilygo
+  platformio_options:
+    # Unless noted otherwise, based on https://github.com/Xinyuan-LilyGO/LilyGo-EPD47/blob/1eb6119fc31fcff7a6bafecb09f4225313859fc5/examples/demo/platformio.ini#L37
+    lib_deps:
+      - SPI
+    upload_speed: 921600
+    monitor_speed: 115200
+    board_build.mcu: esp32s3
+    board_build.f_cpu: 240000000L
+    board_build.arduino.memory_type: qspi_opi
+    board_build.flash_size: 16MB
+    board_build.flash_mode: qio
+    board_build.flash_type: qspi
+    board_build.psram_type: opi
+    board_build.memory_type: qspi_opi
+    board_build.boot_freq: 80m
+    platform_packages:
+      - "toolchain-riscv32-esp @8.4.0+2021r2-patch5"
+    build_flags:  # the first three defines are required for the screen library to function.
+      - "-DBOARD_HAS_PSRAM"
+      - "-DARDUINO_RUNNING_CORE=0"  # TODO: this conflicts with the value from platformio's idedata, spewing a lot of warnings during the build.
+      - "-DARDUINO_EVENT_RUNNING_CORE=0"  # and this too
+      # In addition to lilygo's settings:
+      # To enable reading logs over USB until `hardware_uart: USB_CDC` support
+      # is added to `logger:`, as detailed in <https://github.com/esphome/feature-requests/issues/1906>:
+      - "-DARDUINO_USB_MODE=1"
+      - "-DARDUINO_USB_CDC_ON_BOOT=1"
 
-# The framework setup (use Arduino if your epd library expects it)
 esp32:
+  variant: esp32s3
   board: esp32-s3-devkitc-1
+
   framework:
     type: arduino
+    # Just like in <https://community.home-assistant.io/t/enable-usb-cdc-to-log-hello-world-to-esp32-s3-dev-board-for-esphome/463164/10>
+    # I had problems with newer versions; the following combination happens to work, so using it for now.
+    version: 2.0.3
+    platform_version: 5.1.1
 
-# PlatformIO options: pull in the LilyGo driver library (replace the repository/branch if needed)
-platformio_options:
-  lib_deps:
-    - https://github.com/Xinyuan-LilyGO/LilyGo-EPD47.git
-    # fallback / alternative:
-    # - https://github.com/Xinyuan-LilyGO/LilyGo-EPD47.git
+logger:
+  level: VERBOSE
+  # hardware_uart: USB_CDC  # see note about <https://github.com/esphome/feature-requests/issues/1906> above
 
-# Optional: if this T5 board has PSRAM and you rely on it
-  build_flags: -DBOARD_HAS_PSRAM
+# Enable Home Assistant API
+#api:
+#  encryption:
+#    key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI0MWY0OThlNDA5NGQ0NzcxOWI1ZWYxOWNlM2RjNmI3MyIsImlhdCI6MTc2MjM2ODg3NCwiZXhwIjoyMDc3NzI4ODc0fQ._vJr2zvthytTevDF5yOAh5puVZUwtXyGCOs569_xwa8"
+#ota:
+#  platform: esphome
+  #password: !secret api_ota_password
+
+wifi: 
+  ssid: ""
+  password: ""  
+
+binary_sensor:
+  - platform: gpio
+    pin: 
+      number: GPIO21 #was GPIO39 on the previous board
+      inverted: true
+    name: "Button 1"
+    on_press:
+      - logger.log: PhysButton Pressed
 
 external_components:
-  - source: github://g0rg0n3/esphome-lilygo-t547plus
+  - source: github://nickolay/esphome-lilygo-t547plus
     components: ["t547"]
+
+font:
+  - file: "Google_Sans_Bold.ttf"
+    id: font_name
+    size: 38
+
+  - file: 'materialdesignicons-webfont.ttf'
+    id: font_icons
+    size: 160
+    glyphs:
+      - "\U000F0594" # clear-night
+      - "\U000F0590" # cloudy
+      - "\U000F0595" # partlycloudy
+      - "\U000F0591" # fog      
+      - "\U000F0592" # hail
+      - "\U000F0593" # lightning
+      - "\U000F067E" # lightning-rainy
+      - "\U000F0596" # pouring
+      - "\U000F0597" # rainy
+      - "\U000F0F36" # snowy
+      - "\U000F067F" # snowy-rainy
+      - "\U000F0599" # sunny
+      - "\U000F059D" # windy
+      - "\U000F059E" # windy-variant
+      - "\U000F0F38" # exceptional
+      
+  - file: 'materialdesignicons-webfont.ttf'
+    id: font_icons_small
+    size: 56
+    glyphs:
+      - "\U000F10C2" # Temperature High
+      - "\U000F10C3" # Temperature Low
+      - "\U000F07E4" # CO2
+      - "\U000F054B" # umbrella      
+      - "\U000F0592" # hail
+      - "\U000F0593" # lightning
+      - "\U000F067E" # lightning-rainy
+      - "\U000F0597" # rainy
+      - "\U000F0F36" # snowy
+      - "\U000F0594" # clear-night
+      - "\U000F0599" # sunny
+      - "\U000F07CA" # fuel
+      - "\U000F024A" # flower
+      - "\U000F051F" # time-remaining
+      - "\U000F140B" # Energy
+
+#time:
+#  - platform: homeassistant
+#    id: ntp
 
 display:
   - platform: t547
-    id: t5_display
+    # rotation: 180
     update_interval: 30s
+    lambda: |-
+      it.line(50, 0, 960, 540);
