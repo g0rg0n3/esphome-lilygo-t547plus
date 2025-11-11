@@ -1,10 +1,9 @@
 esphome:
   name: t547_example
-  platform: ESP32
-  board: esp32-s3-devkitc-1  # set to the exact board you use
 
 # The framework setup (use Arduino if your epd library expects it)
 esp32:
+  board: esp32-s3-devkitc-1
   framework:
     type: arduino
 
