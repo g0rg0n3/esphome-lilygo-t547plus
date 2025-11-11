@@ -1,0 +1,12 @@
+{
+  "format_version": 1,
+  "name": "t547",
+  "version": "1.0.0",
+  "codeowners": [],
+  "files": [
+    "t547.h",
+    "t547.cpp"
+  ],
+  "dependencies": [],
+  "esphome_version": ">=2023.6.5"
+}
