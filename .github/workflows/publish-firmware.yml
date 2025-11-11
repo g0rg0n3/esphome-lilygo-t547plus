@@ -1,5 +1,9 @@
 name: Publish Firmware
 
+on:
+  check_run:
+    types: [rerequested, completed]
+    
 permissions:
   contents: write
 
