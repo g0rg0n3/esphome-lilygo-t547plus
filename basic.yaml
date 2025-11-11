@@ -51,8 +51,8 @@ logger:
   #password: !secret api_ota_password
 
 wifi: 
-  ssid: ""
-  password: ""  
+  ssid: "myssd"
+  password: "oouuouuiiou"  
 
 binary_sensor:
   - platform: gpio
