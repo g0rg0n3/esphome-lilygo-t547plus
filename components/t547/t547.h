@@ -10,7 +10,7 @@
 namespace esphome {
 namespace t547 {
 
-class T547 : public PollingComponent, public display::DisplayBuffer {
+class T547 : public display::DisplayBuffer {
  public:
   T547() = default;
 
