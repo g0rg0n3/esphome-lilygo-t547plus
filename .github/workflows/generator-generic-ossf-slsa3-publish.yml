@@ -1,0 +1,4 @@
+- name: ESPHome Builder
+  uses: esphome/build-action@v6
+with:
+  yaml-file: basic.yaml
