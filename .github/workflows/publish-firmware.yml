@@ -8,12 +8,12 @@ permissions:
 jobs:
   build-firmware:
     name: Build Firmware
-    uses: esphome/workflows/.github/workflows/build.yml@2025.1.0
+    uses: esphome/workflows/.github/workflows/build.yml@2024.10.0
     with:
       #### Modify below here to match your project ####
       files: |
         basic.yaml
-      esphome-version: 2025.2.2
+      esphome-version: 2024.5.0
       combined-name: project-template
       #### Modify above here to match your project ####
 
