@@ -1,40 +1,50 @@
 #include "t547.h"
+
 #include "esphome/core/log.h"
 #include "esphome/core/application.h"
 #include "esphome/core/helpers.h"
-#ifdef USE_ESP32_FRAMEWORK_ARDUINO
-
-#include <esp32-hal-gpio.h>
+#include <cstring>
 
 namespace esphome {
 namespace t547 {
 
-static const char *const TAG = "t574";
+static const char *const TAG = "t547";
 
 void T547::setup() {
   ESP_LOGV(TAG, "Initialize called");
   epd_init();
+
   uint32_t buffer_size = this->get_buffer_length_();
 
   if (this->buffer_ != nullptr) {
     free(this->buffer_);  // NOLINT
+    this->buffer_ = nullptr;
   }
 
+  // Try to allocate in PSRAM when available.
   this->buffer_ = (uint8_t *) ps_malloc(buffer_size);
-
   if (this->buffer_ == nullptr) {
-    ESP_LOGE(TAG, "Could not allocate buffer for display!");
-    this->mark_failed();
-    return;
+    ESP_LOGE(TAG, "Could not allocate buffer for display (ps_malloc failed), trying malloc...");
+    this->buffer_ = (uint8_t *) malloc(buffer_size);
+    if (this->buffer_ == nullptr) {
+      ESP_LOGE(TAG, "Could not allocate buffer for display (malloc failed)!");
+      this->mark_failed();
+      return;
+    }
   }
 
   memset(this->buffer_, 0xFF, buffer_size);
   ESP_LOGV(TAG, "Initialize complete");
 }
 
-float T547::get_setup_priority() const { return setup_priority::PROCESSOR; }
+float T547::get_setup_priority() const {
+  // Ensure the display initializes early (bus/pins ready).
+  return setup_priority::PROCESSOR;
+}
+
 size_t T547::get_buffer_length_() {
-    return this->get_width_internal() * this->get_height_internal() / 2;
+  // 4-bit per pixel grayscale (2 pixels per byte).
+  return static_cast<size_t>(this->get_width_internal()) * static_cast<size_t>(this->get_height_internal()) / 2;
 }
 
 void T547::update() {
@@ -45,7 +55,9 @@ void T547::update() {
 void HOT T547::draw_absolute_pixel_internal(int x, int y, Color color) {
   if (x >= this->get_width_internal() || y >= this->get_height_internal() || x < 0 || y < 0)
     return;
-  uint8_t gs = 255 - ((color.red * 2126 / 10000) + (color.green * 7152 / 10000) + (color.blue * 722 / 10000));
+
+  // convert Color to greyscale 0..255
+  uint8_t gs = 255 - static_cast<uint8_t>(((color.red * 2126) / 10000) + ((color.green * 7152) / 10000) + ((color.blue * 722) / 10000));
   epd_draw_pixel(x, y, gs, this->buffer_);
 }
 
@@ -73,16 +85,13 @@ void T547::eink_on_() {
 void T547::display() {
   ESP_LOGV(TAG, "Display called");
   uint32_t start_time = millis();
-
   epd_poweron();
   epd_clear();
+  // epd_draw_grayscale_image expects a frame buffer and will perform appropriate updates
   epd_draw_grayscale_image(epd_full_screen(), this->buffer_);
   epd_poweroff();
-
   ESP_LOGV(TAG, "Display finished (full) (%ums)", millis() - start_time);
 }
 
-}  // namespace T547
+}  // namespace t547
 }  // namespace esphome
-
-#endif  // USE_ESP32_FRAMEWORK_ARDUINO
