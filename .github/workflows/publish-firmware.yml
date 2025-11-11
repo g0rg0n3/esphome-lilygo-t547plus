@@ -1,9 +1,5 @@
 name: Publish Firmware
 
-on:
-  release:
-    types: [published]
-
 permissions:
   contents: write
 
