@@ -63,7 +63,7 @@ void HOT T547::draw_absolute_pixel_internal(int x, int y, Color color) {
 
 void T547::dump_config() {
   LOG_DISPLAY("", "T547", this);
-  LOG_UPDATE_INTERVAL(this);
+  ESP_LOGCONFIG(TAG, "  Update Interval: %u ms", this->get_update_interval());
 }
 
 void T547::eink_off_() {
